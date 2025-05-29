@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Calendar, Fuel, Wrench, Bell, Plus, Edit3, Trash2, Loader2, LogOut, User, DollarSign } from 'lucide-react';
-
-
+import { Car, Calendar, Fuel, Wrench, Bell, Plus, Edit3, Trash2, Loader2, LogOut, User } from 'lucide-react';
 
 
 // Firebase imports
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
-
-
 
 
 // --- New AuthScreen Component ---
@@ -20,12 +16,10 @@ const AuthScreen = ({ onSignIn, authError, isLoadingAuth }) => {
        <Car className="text-blue-500 mx-auto mb-4" size={48} />
        <h2 className="text-2xl font-semibold mb-6">Car Manager</h2>
        <p className="text-gray-600 mb-6">Sign in to manage your vehicle data across all your devices.</p>
-     
+      
        {authError && (
          <p className="text-red-500 text-sm mb-4">{authError}</p>
        )}
-
-
 
 
        <button
@@ -53,33 +47,22 @@ const AuthScreen = ({ onSignIn, authError, isLoadingAuth }) => {
 
 const CarManagerApp = () => {
  const [cars, setCars] = useState([]);
- const [expenseRecords, setExpenseRecords] = useState([]); // For Fuel, Repairs, Parts, Taxes
- const [maintenanceRecords, setMaintenanceRecords] = useState([]); // Separate for Maintenance
+ const [fuelRecords, setFuelRecords] = useState([]);
+ const [maintenanceRecords, setMaintenanceRecords] = useState([]);
  const [activeTab, setActiveTab] = useState('cars');
  const [showAddCar, setShowAddCar] = useState(false);
- const [showAddRecord, setShowAddRecord] = useState(false); // Can be 'expense' or 'maintenance'
+ const [showAddRecord, setShowAddRecord] = useState(false);
  const [editingCar, setEditingCar] = useState(null);
- const [editingExpenseRecord, setEditingExpenseRecord] = useState(null); // For Fuel, Repairs, Parts, Taxes
- const [editingMaintenanceRecord, setEditingMaintenanceRecord] = useState(null); // Separate for Maintenance
+ const [editingFuelRecord, setEditingFuelRecord] = useState(null);
+ const [editingMaintenanceRecord, setEditingMaintenanceRecord] = useState(null);
  const [filterCarId, setFilterCarId] = useState('');
  const [notifications, setNotifications] = useState([]);
- const [showConfirmDelete, setShowConfirmDelete] = useState(false); // For car deletion
+ const [showConfirmDelete, setShowConfirmDelete] = useState(false);
  const [carToDelete, setCarToDelete] = useState(null);
- const [showConfirmDeleteExpense, setShowConfirmDeleteExpense] = useState(false); // For expense deletion
- const [expenseToDelete, setExpenseToDelete] = useState(null);
- const [showConfirmDeleteMaintenance, setShowConfirmDeleteMaintenance] = useState(false); // For maintenance deletion
- const [maintenanceToDelete, setMaintenanceToDelete] = useState(null);
- const [expenseView, setExpenseView] = useState('all'); // For filtering expenses by category
- const [maintenanceView, setMaintenanceView] = useState('all'); // For filtering maintenance by planned/past
+ const [maintenanceView, setMaintenanceView] = useState('all');
 
-
-
-
- // Use the actual Firebase project ID here
- const appId = 'carmanagement-3fadc'; 
-
-
-
+// Use the actual Firebase project ID here
+ const appId = 'carmanagement-3fadc';  
 
  // Firebase states
  const [db, setDb] = useState(null);
@@ -87,17 +70,17 @@ const CarManagerApp = () => {
  const [userId, setUserId] = useState(null);
  const [isAuthReady, setIsAuthReady] = useState(false);
  const [isLoadingCars, setIsLoadingCars] = useState(true);
- const [isLoadingExpenseRecords, setIsLoadingExpenseRecords] = useState(true);
+ const [isLoadingFuelRecords, setIsLoadingFuelRecords] = useState(true);
  const [isLoadingMaintenanceRecords, setIsLoadingMaintenanceRecords] = useState(true);
- const [authError, setAuthError] = useState(null);
- const [isLoadingAuth, setIsLoadingAuth] = useState(false);
-
-
+ const [authError, setAuthError] = useState(null); // New state for auth errors
+ const [isLoadingAuth, setIsLoadingAuth] = useState(false); // New state for auth loading
 
 
  // Initialize Firebase and authenticate
  useEffect(() => {
    try {
+     
+     // Use the actual Firebase config object here
      const firebaseConfig = {
        apiKey: "AIzaSyBFJdjrhfQocX5zOCMCCUxRv5FJk4e0CxA",
        authDomain: "carmanagement-3fadc.firebaseapp.com",
@@ -106,13 +89,13 @@ const CarManagerApp = () => {
        messagingSenderId: "393991063519",
        appId: "1:393991063519:web:bb015c0487e16cd4be266a"
      };
-   
+    
+
+
      if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
        console.error("Firebase config is missing. Please ensure __firebase_config is provided.");
        return;
      }
-
-
 
 
      const app = initializeApp(firebaseConfig);
@@ -120,38 +103,30 @@ const CarManagerApp = () => {
      const firebaseAuth = getAuth(app);
 
 
-
-
      setDb(firestoreDb);
      setAuth(firebaseAuth);
-
-
 
 
      const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
        if (user) {
          setUserId(user.uid);
-         setAuthError(null);
+         setAuthError(null); // Clear any previous auth errors on successful sign-in
        } else {
-         setUserId(null);
+         setUserId(null); // No user is signed in
        }
-       setIsAuthReady(true);
-       setIsLoadingAuth(false);
+       setIsAuthReady(true); // Auth state is ready
+       setIsLoadingAuth(false); // Auth loading is complete
      });
 
 
-
-
-     return () => unsubscribe();
+     return () => unsubscribe(); // Cleanup auth listener
    } catch (error) {
      console.error("Failed to initialize Firebase:", error);
      setAuthError("Failed to initialize app. Please check your internet connection.");
-     setIsAuthReady(true);
+     setIsAuthReady(true); // Still set ready to display auth screen
      setIsLoadingAuth(false);
    }
- }, []);
-
-
+ }, []); // Run once on component mount
 
 
  // Google Sign-in Handler
@@ -165,6 +140,7 @@ const CarManagerApp = () => {
    const provider = new GoogleAuthProvider();
    try {
      await signInWithPopup(auth, provider);
+     // onAuthStateChanged listener will handle setting userId
    } catch (error) {
      console.error("Error during Google sign-in:", error.code, error.message);
      if (error.code === 'auth/popup-closed-by-user') {
@@ -179,21 +155,22 @@ const CarManagerApp = () => {
  };
 
 
-
-
  // Logout Handler
  const handleLogout = async () => {
    if (!auth) return;
    try {
      await signOut(auth);
+     // onAuthStateChanged will set userId to null, triggering AuthScreen
+     // Reset data to empty arrays when logging out
      setCars([]);
-     setExpenseRecords([]);
+     setFuelRecords([]);
      setMaintenanceRecords([]);
      setNotifications([]);
      setFilterCarId('');
      setActiveTab('cars');
    } catch (error) {
      console.error("Error signing out:", error);
+     // Using a custom modal/message box instead of alert()
      console.log("Failed to log out. Please try again.");
    }
  };
@@ -208,7 +185,7 @@ const CarManagerApp = () => {
      const unsubscribe = onSnapshot(carsCollectionRef, (snapshot) => {
        const fetchedCars = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
        setCars(fetchedCars);
-       checkNotifications(fetchedCars, expenseRecords, maintenanceRecords);
+       checkNotifications(fetchedCars);
        setIsLoadingCars(false);
      }, (error) => {
        console.error("Error fetching cars:", error);
@@ -216,37 +193,34 @@ const CarManagerApp = () => {
      });
      return () => unsubscribe();
    } else if (isAuthReady && !userId) {
+     // If auth is ready but no userId, clear data and stop loading indicators
      setCars([]);
      setIsLoadingCars(false);
-   }
- }, [db, userId, isAuthReady, expenseRecords, maintenanceRecords]);
-
-
-
-
- // Fetch expense records (Fuel, Repairs, Parts, Taxes)
- useEffect(() => {
-   if (db && userId && isAuthReady) {
-     const expenseRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/expenseRecords`);
-     const unsubscribe = onSnapshot(expenseRecordsCollectionRef, (snapshot) => {
-       const fetchedExpenseRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-       setExpenseRecords(fetchedExpenseRecords);
-       setIsLoadingExpenseRecords(false);
-     }, (error) => {
-       console.error("Error fetching expense records:", error);
-       setIsLoadingExpenseRecords(false);
-     });
-     return () => unsubscribe();
-   } else if (isAuthReady && !userId) {
-     setExpenseRecords([]);
-     setIsLoadingExpenseRecords(false);
    }
  }, [db, userId, isAuthReady]);
 
 
+ // Fetch fuel records when auth is ready and db/userId are available
+ useEffect(() => {
+   if (db && userId && isAuthReady) {
+     const fuelRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`);
+     const unsubscribe = onSnapshot(fuelRecordsCollectionRef, (snapshot) => {
+       const fetchedFuelRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+       setFuelRecords(fetchedFuelRecords);
+       setIsLoadingFuelRecords(false);
+     }, (error) => {
+       console.error("Error fetching fuel records:", error);
+       setIsLoadingFuelRecords(false);
+     });
+     return () => unsubscribe();
+   } else if (isAuthReady && !userId) {
+     setFuelRecords([]);
+     setIsLoadingFuelRecords(false);
+   }
+ }, [db, userId, isAuthReady]);
 
 
- // Fetch maintenance records
+ // Fetch maintenance records when auth is ready and db/userId are available
  useEffect(() => {
    if (db && userId && isAuthReady) {
      const maintenanceRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`);
@@ -266,28 +240,24 @@ const CarManagerApp = () => {
  }, [db, userId, isAuthReady]);
 
 
-
-
- // Re-check notifications whenever cars, expense, or maintenance records change
+ // Re-check notifications whenever cars, fuel, or maintenance records change
  useEffect(() => {
-   if (!isLoadingCars && !isLoadingExpenseRecords && !isLoadingMaintenanceRecords) {
-     checkNotifications(cars, expenseRecords, maintenanceRecords);
+   if (!isLoadingCars && !isLoadingFuelRecords && !isLoadingMaintenanceRecords) {
+     checkNotifications(cars);
    }
- }, [cars, expenseRecords, maintenanceRecords, isLoadingCars, isLoadingExpenseRecords, isLoadingMaintenanceRecords]);
+ }, [cars, fuelRecords, maintenanceRecords, isLoadingCars, isLoadingFuelRecords, isLoadingMaintenanceRecords]);
 
 
-
-
- const checkNotifications = (carsList, currentExpenseRecords, currentMaintenanceRecords) => {
+ const checkNotifications = (carsList) => {
    const today = new Date();
    const upcomingExpiries = [];
- 
+  
    carsList.forEach(car => {
      const insuranceDate = new Date(car.insuranceExpiry);
      const taxDate = new Date(car.taxExpiry);
      const roadTaxDate = new Date(car.roadTaxExpiry);
      const motDate = new Date(car.motExpiry);
-   
+    
      const checkAndAdd = (date, type) => {
        const daysLeft = Math.ceil((new Date(date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
        if (daysLeft <= 30) {
@@ -302,18 +272,14 @@ const CarManagerApp = () => {
      };
 
 
-
-
      checkAndAdd(car.insuranceExpiry, 'Insurance');
      checkAndAdd(car.taxExpiry, 'Tax');
      checkAndAdd(car.roadTaxExpiry, 'Road Tax');
      checkAndAdd(car.motExpiry, 'MOT');
 
 
-
-
-     // Check for planned maintenance from maintenanceRecords
-     currentMaintenanceRecords.filter(rec => rec.carId === car.id && rec.isPlanned).forEach(rec => {
+     // Check for planned maintenance as notifications
+     maintenanceRecords.filter(rec => rec.carId === car.id && rec.isPlanned).forEach(rec => {
        const serviceDate = new Date(rec.date);
        const serviceDaysLeft = Math.ceil((serviceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
        if (serviceDaysLeft <= 30) {
@@ -327,12 +293,10 @@ const CarManagerApp = () => {
        }
      });
    });
- 
+  
    upcomingExpiries.sort((a, b) => a.daysLeft - b.daysLeft);
    setNotifications(upcomingExpiries);
  };
-
-
 
 
  const addCar = async (carData) => {
@@ -343,199 +307,173 @@ const CarManagerApp = () => {
      setShowAddCar(false);
    } catch (e) {
      console.error("Error adding car: ", e);
+     // Using a custom modal/message box instead of alert()
      console.log("Failed to add car. Please try again.");
    }
  };
 
 
+//  const deleteCar = async (carId) => {
+//    if (!db || !userId) return;
+//    try {
+//      // Delete car document
+//      await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/cars`, carId));
 
 
- const deleteCar = async (carId) => {
+//      // Delete associated fuel records (Firestore queries return docs, not just IDs)
+//      const fuelRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`), where("carId", "==", parseInt(carId)));
+//      const fuelRecordsSnapshot = await getDocs(fuelRecordsQuery);
+//      fuelRecordsSnapshot.forEach(async (recordDoc) => {
+//        await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/fuelRecords`, recordDoc.id));
+//      });
+
+
+//      // Delete associated maintenance records
+//      const maintenanceRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`), where("carId", "==", parseInt(carId)));
+//      const maintenanceRecordsSnapshot = await getDocs(maintenanceRecordsQuery);
+//      maintenanceRecordsSnapshot.forEach(async (recordDoc) => {
+//        await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, recordDoc.id));
+//      });
+
+
+//      setShowConfirmDelete(false);
+//      setCarToDelete(null);
+//    } catch (e) {
+//      console.error("Error deleting car and associated records: ", e);
+//      // Using a custom modal/message box instead of alert()
+//      console.log("Failed to delete car and its records. Please try again.");
+//    }
+//  };
+const deleteCar = async (carId) => { // carId is the STRING ID of the car document
+  if (!db || !userId) return;
+  try {
+    // Delete car document
+    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/cars`, carId));
+
+    // Delete associated fuel records
+    // IMPORTANT: Ensure 'carId' field in fuelRecords matches the car document ID (string)
+    // Remove parseInt - the 'carId' field in fuel records should be a string matching the car's document ID
+    const fuelRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`), where("carId", "==", carId)); // <--- CHANGED
+    const fuelRecordsSnapshot = await getDocs(fuelRecordsQuery);
+    fuelRecordsSnapshot.forEach(async (recordDoc) => {
+      await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/fuelRecords`, recordDoc.id));
+    });
+
+    // Delete associated maintenance records
+    // Remove parseInt - the 'carId' field in maintenance records should be a string matching the car's document ID
+    const maintenanceRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`), where("carId", "==", carId)); // <--- CHANGED
+    const maintenanceRecordsSnapshot = await getDocs(maintenanceRecordsQuery);
+    maintenanceRecordsSnapshot.forEach(async (recordDoc) => {
+      await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, recordDoc.id));
+    });
+
+    setShowConfirmDelete(false);
+    setCarToDelete(null);
+  } catch (e) {
+    console.error("Error deleting car and associated records: ", e);
+    // Using a custom modal/message box instead of alert()
+    console.log("Failed to delete car and its records. Please try again.");
+  }
+};
+
+
+
+ const addFuelRecord = async (recordData, carId) => {
    if (!db || !userId) return;
    try {
-     await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/cars`, carId));
+     const fuelRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`);
+     await addDoc(fuelRecordsCollectionRef, { ...recordData, carId: carId });
 
 
-
-
-     // Delete associated expense records
-     const expenseRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/expenseRecords`), where("carId", "==", carId));
-     const expenseRecordsSnapshot = await getDocs(expenseRecordsQuery);
-     expenseRecordsSnapshot.forEach(async (recordDoc) => {
-       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/expenseRecords`, recordDoc.id));
-     });
-
-
-
-
-     // Delete associated maintenance records
-     const maintenanceRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`), where("carId", "==", carId));
-     const maintenanceRecordsSnapshot = await getDocs(maintenanceRecordsQuery);
-     maintenanceRecordsSnapshot.forEach(async (recordDoc) => {
-       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, recordDoc.id));
-     });
-
-
-
-
-     setShowConfirmDelete(false);
-     setCarToDelete(null);
-   } catch (e) {
-     console.error("Error deleting car and associated records: ", e);
-     console.log("Failed to delete car and its records. Please try again.");
-   }
- };
-
-
-
-
- // Function for adding non-maintenance expense records
- const addExpenseRecord = async (recordData, carId) => {
-   if (!db || !userId) return;
-   try {
-     const expenseRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/expenseRecords`);
-     const dataToSave = {
-       ...recordData,
-       carId: carId,
-     };
-     await addDoc(expenseRecordsCollectionRef, dataToSave);
-
-
-
-
-     // Update car mileage if this is the highest mileage record for this car
-     if (recordData.mileage) {
-       const carRef = doc(db, `artifacts/${appId}/users/${userId}/cars`, String(carId));
-       const carDoc = await getDoc(carRef);
-       if (carDoc.exists()) {
-         const currentMileage = carDoc.data().mileage || 0;
-         if (recordData.mileage > currentMileage) {
-           await updateDoc(carRef, { mileage: recordData.mileage });
-         }
+     // Update car mileage if this is the highest mileage fuel record for this car
+     const carRef = doc(db, `artifacts/${appId}/users/${userId}/cars`, String(carId));
+     const carDoc = await getDoc(carRef);
+     if (carDoc.exists()) {
+       const currentMileage = carDoc.data().mileage || 0;
+       if (recordData.mileage > currentMileage) {
+         await updateDoc(carRef, { mileage: recordData.mileage });
        }
      }
      setShowAddRecord(false);
    } catch (e) {
-     console.error("Error adding expense record: ", e);
-     console.log("Failed to add expense record. Please try again.");
+     console.error("Error adding fuel record: ", e);
+     // Using a custom modal/message box instead of alert()
+     console.log("Failed to add fuel record. Please try again.");
    }
  };
 
 
-
-
- // Function for editing non-maintenance expense records
- const editExpenseRecord = async (recordData, carId) => {
-   if (!db || !userId || !editingExpenseRecord) return;
+ const editFuelRecord = async (recordData, carId) => {
+   if (!db || !userId || !editingFuelRecord) return;
    try {
-     const dataToUpdate = {
-       ...recordData,
-       carId: carId,
-     };
-     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/expenseRecords`, editingExpenseRecord.id), dataToUpdate);
+     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/fuelRecords`, editingFuelRecord.id), { ...recordData, carId: carId });
 
 
-
-
-     // Re-evaluate car mileage after editing an expense record
-     if (recordData.mileage) {
-       const carRef = doc(db, `artifacts/${appId}/users/${userId}/cars`, String(carId));
-       const expenseRecordsForCar = (await getDocs(query(collection(db, `artifacts/${appId}/users/${userId}/expenseRecords`), where("carId", "==", carId)))).docs.map(d => d.data());
-     
-       let maxMileage = 0;
-       if (expenseRecordsForCar.length > 0) {
-         maxMileage = Math.max(...expenseRecordsForCar.map(r => r.mileage || 0));
-       }
-
-
-
-
-       const carDoc = await getDoc(carRef);
-       if (carDoc.exists() && carDoc.data().mileage !== maxMileage) {
-          await updateDoc(carRef, { mileage: maxMileage });
-       }
+     // Re-evaluate car mileage after editing a fuel record
+     const carRef = doc(db, `artifacts/${appId}/users/${userId}/cars`, String(carId));
+     const fuelRecordsForCar = (await getDocs(query(collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`), where("carId", "==", carId)))).docs.map(d => d.data());
+    
+     let maxMileage = 0;
+     if (fuelRecordsForCar.length > 0) {
+       maxMileage = Math.max(...fuelRecordsForCar.map(r => r.mileage));
+     } else {
+       // If no fuel records, set mileage to 0 or initial car mileage if known
+       // For simplicity, we'll set to 0 if no fuel records contribute to mileage.
+       // A more complex app might revert to the car's initial mileage on creation.
+       maxMileage = 0;
      }
-     setEditingExpenseRecord(null);
+
+
+     const carDoc = await getDoc(carRef);
+     if (carDoc.exists() && carDoc.data().mileage !== maxMileage) {
+        await updateDoc(carRef, { mileage: maxMileage });
+     }
+     setEditingFuelRecord(null);
    } catch (e) {
-     console.error("Error editing expense record: ", e);
-     console.log("Failed to update expense record. Please try again.");
+     console.error("Error editing fuel record: ", e);
+     // Using a custom modal/message box instead of alert()
+     console.log("Failed to update fuel record. Please try again.");
    }
  };
 
 
-
-
- // Function for deleting an expense record
- const deleteExpenseRecord = async (recordId) => {
-   if (!db || !userId) return;
-   try {
-     await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/expenseRecords`, recordId));
-     setShowConfirmDeleteExpense(false);
-     setExpenseToDelete(null);
-   } catch (e) {
-     console.error("Error deleting expense record: ", e);
-     console.log("Failed to delete expense record. Please try again.");
-   }
- };
-
-
-
-
- // Function for adding maintenance records
  const addMaintenanceRecord = async (recordData, carId) => {
    if (!db || !userId) return;
    try {
      const maintenanceRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`);
-     const dataToSave = {
-       ...recordData,
-       carId: carId,
-       isPlanned: new Date(recordData.date).getTime() > new Date().getTime() // Determine if planned based on date
-     };
-     await addDoc(maintenanceRecordsCollectionRef, dataToSave);
+     await addDoc(maintenanceRecordsCollectionRef, { ...recordData, carId: carId, isPlanned: new Date(recordData.date).getTime() > new Date().getTime() });
      setShowAddRecord(false);
    } catch (e) {
      console.error("Error adding maintenance record: ", e);
+     // Using a custom modal/message box instead of alert()
      console.log("Failed to add maintenance record. Please try again.");
    }
  };
+// const addMaintenanceRecord = async (recordData, carId) => { // carId is now expected to be a string
+//   if (!db || !userId) return;
+//   try {
+//     const maintenanceRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`);
+//     await addDoc(maintenanceRecordsCollectionRef, { ...recordData, carId: carId, isPlanned: new Date(recordData.date).getTime() > new Date().getTime() }); // Store carId as string
+//     setShowAddRecord(false);
+//   } catch (e) {
+//     console.error("Error adding maintenance record: ", e);
+//     console.log("Failed to add maintenance record. Please try again.");
+//   }
+// };
 
 
 
-
- // Function for editing maintenance records
  const editMaintenanceRecord = async (recordData, carId) => {
    if (!db || !userId || !editingMaintenanceRecord) return;
    try {
-     const dataToUpdate = {
-       ...recordData,
-       carId: carId,
-       isPlanned: new Date(recordData.date).getTime() > new Date().getTime()
-     };
-     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, editingMaintenanceRecord.id), dataToUpdate);
+     await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, editingMaintenanceRecord.id), { ...recordData, carId: carId, isPlanned: new Date(recordData.date).getTime() > new Date().getTime() });
      setEditingMaintenanceRecord(null);
    } catch (e) {
      console.error("Error editing maintenance record: ", e);
+     // Using a custom modal/message box instead of alert()
      console.log("Failed to update maintenance record. Please try again.");
    }
  };
-
-
-
-
- // Function for deleting a maintenance record
- const deleteMaintenanceRecord = async (recordId) => {
-   if (!db || !userId) return;
-   try {
-     await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, recordId));
-     setShowConfirmDeleteMaintenance(false);
-     setMaintenanceToDelete(null);
-   } catch (e) {
-     console.error("Error deleting maintenance record: ", e);
-     console.log("Failed to delete maintenance record. Please try again.");
-   }
- };
-
-
 
 
  const editCar = async (carData) => {
@@ -545,11 +483,10 @@ const CarManagerApp = () => {
      setEditingCar(null);
    } catch (e) {
      console.error("Error editing car: ", e);
+     // Using a custom modal/message box instead of alert()
      console.log("Failed to update car. Please try again.");
    }
  };
-
-
 
 
  const CarForm = ({ onSubmit, onCancel, initialData = null }) => {
@@ -566,8 +503,6 @@ const CarManagerApp = () => {
    });
 
 
-
-
    // Function to resize and compress image
    const processImage = (file, maxWidth, maxHeight, quality) => {
      return new Promise((resolve, reject) => {
@@ -579,8 +514,6 @@ const CarManagerApp = () => {
            const canvas = document.createElement('canvas');
            let width = img.width;
            let height = img.height;
-
-
 
 
            // Calculate new dimensions while maintaining aspect ratio
@@ -599,16 +532,12 @@ const CarManagerApp = () => {
            canvas.height = height;
 
 
-
-
            const ctx = canvas.getContext('2d');
            if (!ctx) {
                reject(new Error("Could not get 2D context for canvas"));
                return;
            }
            ctx.drawImage(img, 0, 0, width, height);
-
-
 
 
            // Compress image and get data URL
@@ -626,10 +555,9 @@ const CarManagerApp = () => {
    };
 
 
-
-
    const handleSubmit = () => {
      if (!formData.name || !formData.year || formData.mileage === '' || !formData.insuranceExpiry || !formData.taxExpiry || !formData.roadTaxExpiry || !formData.motExpiry) {
+       // Using a custom modal/message box instead of alert()
        console.log("Please fill in all required fields.");
        return;
      }
@@ -637,23 +565,21 @@ const CarManagerApp = () => {
    };
 
 
-
-
    const handlePhotoChange = async (e) => {
      const file = e.target.files[0];
      if (file) {
        try {
+         // Process image: max width 800px, max height 600px, quality 0.7 (70%)
          const processedPhoto = await processImage(file, 1200, 900, 0.85);
          setFormData({...formData, photo: processedPhoto});
        } catch (error) {
          console.error("Error processing image:", error);
+         // Using a custom modal/message box instead of alert()
          console.log("Failed to process image. Please try a different file or a smaller image.");
-         setFormData({...formData, photo: null});
+         setFormData({...formData, photo: null}); // Clear photo if processing fails
        }
      }
    };
-
-
 
 
    return (
@@ -761,17 +687,12 @@ const CarManagerApp = () => {
  };
 
 
-
-
- // Unified RecordForm for all expenses and maintenance
  const RecordForm = ({ type, onSubmit, onCancel, initialData = null, initialCarId = '' }) => {
    const [formData, setFormData] = useState(initialData ||
-     (type === 'expense'
-       ? { category: '', description: '', date: '', amount: '', mileage: '', notes: '' } // Added description
-       : { date: '', type: '', cost: '', mileage: '', notes: '', isPlanned: false })
+     (type === 'fuel'
+       ? { date: '', amount: '', mileage: '' }
+       : { date: '', type: '', cost: '', mileage: '', notes: '' })
    );
-
-
 
 
    const [localCarId, setLocalCarId] = useState(
@@ -779,73 +700,39 @@ const CarManagerApp = () => {
    );
 
 
-
-
    useEffect(() => {
      if (initialData) {
        setLocalCarId(String(initialData.carId));
-       setFormData(initialData);
      } else {
        setLocalCarId(String(initialCarId));
-       setFormData(type === 'expense'
-         ? { category: '', description: '', date: '', amount: '', mileage: '', notes: '' } // Added description
-         : { date: '', type: '', cost: '', mileage: '', notes: '', isPlanned: false }
-       );
      }
-   }, [initialData, initialCarId, type]);
+   }, [initialData, initialCarId]);
 
-
-
-
+//|| isNaN(localCarId)
    const handleSubmit = () => {
      if (localCarId === '' || !formData.date || formData.mileage === '') {
+       // Using a custom modal/message box instead of alert()
        console.log("Please select a car and fill in all required fields.");
        return;
      }
-
-
-
-
-     if (type === 'expense') {
-       if (!formData.category) {
-         console.log("Please select an expense category.");
-         return;
-       }
-       if (!formData.description) { // New validation for description
-         console.log("Please enter an expense description.");
-         return;
-       }
-       if (isNaN(parseFloat(formData.amount)) || parseFloat(formData.amount) < 0) {
-         console.log("Please enter a valid amount.");
-         return;
-       }
-     } else if (type === 'maintenance') {
-       if (!formData.type) {
-         console.log("Please enter a service type for maintenance.");
-         return;
-       }
-       if (isNaN(parseFloat(formData.cost)) || parseFloat(formData.cost) < 0) {
-         console.log("Please enter a valid cost.");
-         return;
-       }
+     if (type === 'fuel' && (isNaN(parseFloat(formData.amount)) || parseFloat(formData.amount) <= 0)) {
+       // Using a custom modal/message box instead of alert()
+       console.log("Please enter a valid fuel amount.");
+       return;
+     }
+     if (type === 'maintenance' && (isNaN(parseFloat(formData.cost)) || parseFloat(formData.cost) < 0)) {
+       // Using a custom modal/message box instead of alert()
+       console.log("Please enter a valid cost.");
+       return;
      }
      onSubmit(formData, localCarId);
    };
 
 
-
-
-   const expenseCategories = ['Fuel', 'Repairs', 'Parts', 'Taxes'];
-
-
-
-
    return (
      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-         <h3 className="text-lg font-semibold mb-4">
-           {initialData ? `Edit ${type === 'expense' ? 'Expense' : 'Maintenance'} Record` : `Add ${type === 'expense' ? 'Expense' : 'Maintenance'} Record`}
-         </h3>
+         <h3 className="text-lg font-semibold mb-4">{initialData ? `Edit ${type === 'fuel' ? 'Fuel' : 'Maintenance'} Record` : `Add ${type === 'fuel' ? 'Fuel' : 'Maintenance'} Record`}</h3>
          <div className="space-y-4">
            <select
              value={localCarId}
@@ -859,31 +746,7 @@ const CarManagerApp = () => {
                <option key={car.id} value={String(car.id)}>{car.name}</option>
              ))}
            </select>
-         
-           {type === 'expense' && (
-             <>
-               <select
-                 value={formData.category}
-                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                 className="w-full p-2 border rounded"
-                 required
-               >
-                 <option value="">Select Expense Category</option>
-                 {expenseCategories.map(category => (
-                   <option key={category} value={category}>{category}</option>
-                 ))}
-               </select>
-               <input
-                 type="text"
-                 placeholder="Expense Description (e.g., Premium Unleaded, New Tires)" // New description field
-                 value={formData.description}
-                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                 className="w-full p-2 border rounded"
-                 required
-               />
-             </>
-           )}
-         
+          
            <input
              type="date"
              value={formData.date}
@@ -891,18 +754,18 @@ const CarManagerApp = () => {
              className="w-full p-2 border rounded"
              required
            />
-         
-           {type === 'expense' ? (
+          
+           {type === 'fuel' ? (
              <input
                type="number"
                step="0.01"
-               placeholder="Amount ($)"
+               placeholder="Amount Spent ($)"
                value={formData.amount}
                onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
                className="w-full p-2 border rounded"
                required
              />
-           ) : ( // type === 'maintenance'
+           ) : (
              <>
                <input
                  type="text"
@@ -921,9 +784,15 @@ const CarManagerApp = () => {
                  className="w-full p-2 border rounded"
                  required
                />
+               <textarea
+                 placeholder="Notes (optional)"
+                 value={formData.notes}
+                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                 className="w-full p-2 border rounded h-20"
+               />
              </>
            )}
-         
+          
            <input
              type="number"
              placeholder="Current Mileage"
@@ -932,33 +801,7 @@ const CarManagerApp = () => {
              className="w-full p-2 border rounded"
              required
            />
-
-
-
-
-           <textarea
-             placeholder="Notes (optional)"
-             value={formData.notes}
-             onChange={(e) => setFormData({...formData, notes: e.target.value})}
-             className="w-full p-2 border rounded h-20"
-           />
-
-
-
-
-           {type === 'maintenance' && (
-             <div className="flex items-center gap-2">
-               <input
-                 type="checkbox"
-                 id="isPlanned"
-                 checked={formData.isPlanned}
-                 onChange={(e) => setFormData({...formData, isPlanned: e.target.checked})}
-                 className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-               />
-               <label htmlFor="isPlanned" className="text-sm text-gray-700">Planned Maintenance</label>
-             </div>
-           )}
-         
+          
            <div className="flex gap-2">
              <button onClick={handleSubmit} className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
                {initialData ? 'Update Record' : 'Add Record'}
@@ -974,17 +817,13 @@ const CarManagerApp = () => {
  };
 
 
-
-
- const ConfirmDeleteModal = ({ type, item, onConfirm, onCancel }) => { // Modified to be generic
+ const ConfirmDeleteModal = ({ car, onConfirm, onCancel }) => {
    return (
      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
        <div className="bg-white rounded-lg p-6 w-full max-w-sm">
          <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
-         <p className="mb-4">Are you sure you want to delete this {type} record?</p>
-         {type === 'car' && item && (
-           <p className="text-sm text-gray-600 mb-6">This will also remove all associated expense and maintenance records for <span className="font-medium">{item.name}</span>.</p>
-         )}
+         <p className="mb-4">Are you sure you want to delete <span className="font-medium">{car.name}</span>?</p>
+         <p className="text-sm text-gray-600 mb-6">This will also remove all associated fuel and maintenance records.</p>
          <div className="flex gap-2 justify-end">
            <button onClick={onCancel} className="bg-gray-300 p-2 rounded hover:bg-gray-400">
              Cancel
@@ -999,10 +838,9 @@ const CarManagerApp = () => {
  };
 
 
-
-
  // --- Main Render Logic ---
  if (!isAuthReady) {
+   // Show a general loading screen while Firebase Auth initializes
    return (
      <div className="min-h-screen flex items-center justify-center bg-gray-50">
        <div className="flex flex-col items-center">
@@ -1014,9 +852,8 @@ const CarManagerApp = () => {
  }
 
 
-
-
  if (!userId) {
+   // If not authenticated, show the login screen
    return (
      <AuthScreen
        onSignIn={handleGoogleSignIn}
@@ -1027,9 +864,8 @@ const CarManagerApp = () => {
  }
 
 
-
-
- if (isLoadingCars || isLoadingExpenseRecords || isLoadingMaintenanceRecords) {
+ // If authenticated and data is loading, show data loading spinner
+ if (isLoadingCars || isLoadingFuelRecords || isLoadingMaintenanceRecords) {
    return (
      <div className="min-h-screen flex items-center justify-center bg-gray-50">
        <div className="flex flex-col items-center">
@@ -1041,8 +877,7 @@ const CarManagerApp = () => {
  }
 
 
-
-
+ // If authenticated and data loaded, render the main app
  return (
    <div className="min-h-screen bg-gray-50">
      {/* Header */}
@@ -1086,17 +921,15 @@ const CarManagerApp = () => {
      </div>
 
 
-
-
      {/* Navigation */}
      <div className="max-w-4xl mx-auto px-4">
        <div className="flex gap-1 mt-4">
-         {['cars', 'expenses', 'maintenance', 'notifications'].map(tab => (
+         {['cars', 'fuel', 'maintenance', 'notifications'].map(tab => (
            <button
              key={tab}
              onClick={() => {
                setActiveTab(tab);
-               setFilterCarId('');
+               setFilterCarId(''); // Reset filter when changing tabs
              }}
              className={`px-4 py-2 rounded-t-lg capitalize ${
                activeTab === tab
@@ -1111,12 +944,10 @@ const CarManagerApp = () => {
      </div>
 
 
-
-
      {/* Content */}
      <div className="max-w-4xl mx-auto px-4 pb-8">
        <div className="bg-white rounded-b-lg shadow-sm min-h-96">
-       
+        
          {/* Cars Tab */}
          {activeTab === 'cars' && (
            <div className="p-6">
@@ -1130,7 +961,7 @@ const CarManagerApp = () => {
                  Add Car
                </button>
              </div>
-           
+            
              <div className="grid gap-4">
                {cars.length === 0 ? (
                  <div className="text-center py-8 text-gray-500">
@@ -1171,7 +1002,7 @@ const CarManagerApp = () => {
                              </button>
                            </div>
                          </div>
-                       
+                        
                          <div className="grid grid-cols-2 gap-3 text-sm">
                            <div>
                              <p className="text-gray-500">Insurance Expires</p>
@@ -1200,14 +1031,12 @@ const CarManagerApp = () => {
          )}
 
 
-
-
-         {/* Expenses Tab (Fuel, Repairs, Parts, Taxes) */}
-         {activeTab === 'expenses' && (
+         {/* Fuel Tab */}
+         {activeTab === 'fuel' && (
            <div className="p-6">
-             <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
-               <h2 className="text-lg font-semibold">Expense Records</h2>
-               <div className="flex items-center gap-2 flex-wrap">
+             <div className="flex justify-between items-center mb-6">
+               <h2 className="text-lg font-semibold">Fuel Records</h2>
+               <div className="flex items-center gap-2">
                  <select
                    value={filterCarId}
                    onChange={(e) => setFilterCarId(e.target.value)}
@@ -1218,106 +1047,58 @@ const CarManagerApp = () => {
                      <option key={car.id} value={car.id}>{car.name}</option>
                    ))}
                  </select>
-                 <div className="flex bg-gray-100 rounded-lg p-1">
-                   {['All', 'Fuel', 'Repairs', 'Parts', 'Taxes'].map(view => (
-                     <button
-                       key={view}
-                       onClick={() => setExpenseView(view.toLowerCase())}
-                       className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                         expenseView === view.toLowerCase()
-                           ? 'bg-white text-blue-600 shadow-sm'
-                           : 'text-gray-600 hover:text-gray-800'
-                       }`}
-                     >
-                       {view}
-                     </button>
-                   ))}
-                 </div>
                  <button
                    onClick={() => {
-                     setShowAddRecord('expense'); // Indicate we're adding a general expense
+                     setShowAddRecord('fuel');
                    }}
                    className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600"
                  >
-                   <DollarSign size={16} />
-                   Add Expense
+                   <Fuel size={16} />
+                   Add Fuel Record
                  </button>
                </div>
              </div>
-           
+            
              <div className="space-y-3">
-               {expenseRecords
+               {fuelRecords
                  .filter(record => filterCarId === '' || record.carId === filterCarId)
-                 .filter(record => {
-                   if (expenseView === 'all') return true;
-                   return record.category?.toLowerCase() === expenseView;
-                 })
                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                  .map(record => {
-                   const car = cars.find(c => c.id === record.carId);
-                   return (
-                     <div key={record.id} className="border-l-4 p-4 rounded-r-lg bg-white">
-                       <div className="flex justify-between items-start">
-                         <div className="flex-grow">
-                           <div className="flex items-center gap-2 mb-1">
-                             <h4 className="font-medium">{car?.name}</h4>
-                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                               record.category === 'Fuel' ? 'bg-orange-100 text-orange-700' :
-                               record.category === 'Repairs' ? 'bg-red-100 text-red-700' :
-                               record.category === 'Parts' ? 'bg-purple-100 text-purple-700' :
-                               record.category === 'Taxes' ? 'bg-green-100 text-green-700' :
-                               'bg-gray-100 text-gray-700'
-                             }`}>
-                               {record.category}
-                             </span>
-                           </div>
-                           <p className="text-sm text-gray-600 mb-2">{new Date(record.date).toLocaleDateString()}</p>
-                           {record.description && <p className="text-sm text-gray-500">{record.description}</p>} {/* Display description */}
-                           {record.notes && <p className="text-sm text-gray-500">{record.notes}</p>}
+                 const car = cars.find(c => c.id === record.carId);
+                 return (
+                   <div key={record.id} className="border rounded-lg p-4">
+                     <div className="flex justify-between items-start">
+                       <div>
+                         <h4 className="font-medium">{car?.name}</h4>
+                         <p className="text-sm text-gray-600">{new Date(record.date).toLocaleDateString()}</p>
+                       </div>
+                       <div className="text-right flex items-center gap-2">
+                         <div>
+                           <p className="font-semibold">${record.amount?.toFixed(2)}</p>
+                           <p className="text-sm text-gray-600">{record.mileage?.toLocaleString()} miles</p>
                          </div>
-                         <div className="text-right ml-4 flex items-center gap-2">
-                           <div>
-                             <p className="font-semibold">${record.amount?.toFixed(2)}</p>
-                             <p className="text-sm text-gray-600">{record.mileage?.toLocaleString()} miles</p>
-                           </div>
-                           <button
-                             onClick={() => {
-                               setEditingExpenseRecord(record);
-                             }}
-                             className="text-blue-500 hover:text-blue-700 p-1"
-                           >
-                             <Edit3 size={16} />
-                           </button>
-                           <button
-                             onClick={() => {
-                               setExpenseToDelete(record);
-                               setShowConfirmDeleteExpense(true);
-                             }}
-                             className="text-red-500 hover:text-red-700 p-1"
-                           >
-                             <Trash2 size={16} />
-                           </button>
-                         </div>
+                         <button
+                           onClick={() => {
+                             setEditingFuelRecord(record);
+                           }}
+                           className="text-blue-500 hover:text-blue-700 p-1"
+                         >
+                           <Edit3 size={16} />
+                         </button>
                        </div>
                      </div>
-                   );
-                 })}
-             
-               {expenseRecords.filter(record => filterCarId === '' || record.carId === filterCarId)
-                 .filter(record => {
-                   if (expenseView === 'all') return true;
-                   return record.category?.toLowerCase() === expenseView;
-                 }).length === 0 && (
+                   </div>
+                 );
+               })}
+               {fuelRecords.filter(record => filterCarId === '' || record.carId === filterCarId).length === 0 && (
                  <div className="text-center py-8 text-gray-500">
-                   <DollarSign size={48} className="mx-auto mb-4 text-gray-300" />
-                   <p>No {expenseView !== 'all' ? expenseView : ''} expense records {filterCarId && `for ${cars.find(c => c.id === filterCarId)?.name}`}</p>
+                   <Fuel size={48} className="mx-auto mb-4 text-gray-300" />
+                   <p>No fuel records {filterCarId && `for ${cars.find(c => c.id === filterCarId)?.name}`}</p>
                  </div>
                )}
              </div>
            </div>
          )}
-
-
 
 
          {/* Maintenance Tab */}
@@ -1370,7 +1151,7 @@ const CarManagerApp = () => {
                  </div>
                  <button
                    onClick={() => {
-                     setShowAddRecord('maintenance'); // Indicate we're adding a maintenance record
+                     setShowAddRecord('maintenance');
                    }}
                    className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600"
                  >
@@ -1379,7 +1160,7 @@ const CarManagerApp = () => {
                  </button>
                </div>
              </div>
-           
+            
              <div className="space-y-3">
                {maintenanceRecords
                  .filter(record => filterCarId === '' || record.carId === filterCarId)
@@ -1425,21 +1206,12 @@ const CarManagerApp = () => {
                            >
                              <Edit3 size={16} />
                            </button>
-                           <button
-                             onClick={() => {
-                               setMaintenanceToDelete(record);
-                               setShowConfirmDeleteMaintenance(true);
-                             }}
-                             className="text-red-500 hover:text-red-700 p-1"
-                           >
-                             <Trash2 size={16} />
-                           </button>
                          </div>
                        </div>
                      </div>
                    );
                  })}
-             
+              
                {maintenanceRecords.filter(record => filterCarId === '' || record.carId === filterCarId).filter(record => {
                  if (maintenanceView === 'past') return !record.isPlanned;
                  if (maintenanceView === 'planned') return record.isPlanned;
@@ -1453,8 +1225,6 @@ const CarManagerApp = () => {
              </div>
            </div>
          )}
-
-
 
 
          {/* Notifications Tab */}
@@ -1473,7 +1243,7 @@ const CarManagerApp = () => {
                  ))}
                </select>
              </div>
-           
+            
              {notifications.filter(notification => filterCarId === '' || cars.find(c => c.name === notification.car)?.id === filterCarId).length === 0 ? (
                <div className="text-center py-8 text-gray-500">
                  <Bell size={48} className="mx-auto mb-4 text-gray-300" />
@@ -1512,8 +1282,6 @@ const CarManagerApp = () => {
      </div>
 
 
-
-
      {/* Modals */}
      {showAddCar && (
        <CarForm
@@ -1521,7 +1289,7 @@ const CarManagerApp = () => {
          onCancel={() => setShowAddCar(false)}
        />
      )}
-   
+    
      {editingCar && (
        <CarForm
          initialData={editingCar}
@@ -1529,41 +1297,25 @@ const CarManagerApp = () => {
          onCancel={() => setEditingCar(null)}
        />
      )}
-   
-     {showAddRecord === 'expense' && (
+    
+     {showAddRecord && (
        <RecordForm
-         type="expense"
-         onSubmit={addExpenseRecord}
-         onCancel={() => setShowAddRecord(false)}
+         type={showAddRecord}
          initialCarId={filterCarId || (cars.length > 0 ? String(cars[0].id) : '')}
-       />
-     )}
-
-
-
-
-     {showAddRecord === 'maintenance' && (
-       <RecordForm
-         type="maintenance"
-         onSubmit={addMaintenanceRecord}
+         onSubmit={showAddRecord === 'fuel' ? addFuelRecord : addMaintenanceRecord}
          onCancel={() => setShowAddRecord(false)}
-         initialCarId={filterCarId || (cars.length > 0 ? String(cars[0].id) : '')}
        />
      )}
 
 
-
-
-     {editingExpenseRecord && (
+     {editingFuelRecord && (
        <RecordForm
-         type="expense"
-         initialData={editingExpenseRecord}
-         onSubmit={editExpenseRecord}
-         onCancel={() => setEditingExpenseRecord(null)}
+         type="fuel"
+         initialData={editingFuelRecord}
+         onSubmit={editFuelRecord}
+         onCancel={() => setEditingFuelRecord(null)}
        />
      )}
-
-
 
 
      {editingMaintenanceRecord && (
@@ -1576,12 +1328,9 @@ const CarManagerApp = () => {
      )}
 
 
-
-
      {showConfirmDelete && carToDelete && (
        <ConfirmDeleteModal
-         type="car"
-         item={carToDelete}
+         car={carToDelete}
          onConfirm={() => deleteCar(carToDelete.id)}
          onCancel={() => {
            setShowConfirmDelete(false);
@@ -1589,41 +1338,9 @@ const CarManagerApp = () => {
          }}
        />
      )}
-
-
-
-
-     {showConfirmDeleteExpense && expenseToDelete && (
-       <ConfirmDeleteModal
-         type="expense"
-         item={expenseToDelete}
-         onConfirm={() => deleteExpenseRecord(expenseToDelete.id)}
-         onCancel={() => {
-           setShowConfirmDeleteExpense(false);
-           setExpenseToDelete(null);
-         }}
-       />
-     )}
-
-
-
-
-     {showConfirmDeleteMaintenance && maintenanceToDelete && (
-       <ConfirmDeleteModal
-         type="maintenance"
-         item={maintenanceToDelete}
-         onConfirm={() => deleteMaintenanceRecord(maintenanceToDelete.id)}
-         onCancel={() => {
-           setShowConfirmDeleteMaintenance(false);
-           setMaintenanceToDelete(null);
-         }}
-       />
-     )}
    </div>
  );
 };
-
-
 
 
 export default CarManagerApp;
