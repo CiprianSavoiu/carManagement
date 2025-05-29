@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/carManagement/static/js/main.e411efc7.js",
+    "main.js": "/carManagement/static/js/main.b41e075e.js",
     "index.html": "/carManagement/index.html",
-    "main.e411efc7.js.map": "/carManagement/static/js/main.e411efc7.js.map"
+    "main.b41e075e.js.map": "/carManagement/static/js/main.b41e075e.js.map"
   },
   "entrypoints": [
-    "static/js/main.e411efc7.js"
+    "static/js/main.b41e075e.js"
   ]
 }
