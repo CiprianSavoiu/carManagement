@@ -61,6 +61,8 @@ const CarManagerApp = () => {
  const [carToDelete, setCarToDelete] = useState(null);
  const [maintenanceView, setMaintenanceView] = useState('all');
 
+// Use the actual Firebase project ID here
+ const appId = 'carmanagement-3fadc';  
 
  // Firebase states
  const [db, setDb] = useState(null);
@@ -77,8 +79,7 @@ const CarManagerApp = () => {
  // Initialize Firebase and authenticate
  useEffect(() => {
    try {
-     // Use the actual Firebase project ID here
-     const appId = 'carmanagement-3fadc';
+     
      // Use the actual Firebase config object here
      const firebaseConfig = {
        apiKey: "AIzaSyBFJdjrhfQocX5zOCMCCUxRv5FJk4e0CxA",
@@ -312,37 +313,69 @@ const CarManagerApp = () => {
  };
 
 
- const deleteCar = async (carId) => {
-   if (!db || !userId) return;
-   try {
-     // Delete car document
-     await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/cars`, carId));
+//  const deleteCar = async (carId) => {
+//    if (!db || !userId) return;
+//    try {
+//      // Delete car document
+//      await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/cars`, carId));
 
 
-     // Delete associated fuel records (Firestore queries return docs, not just IDs)
-     const fuelRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`), where("carId", "==", parseInt(carId)));
-     const fuelRecordsSnapshot = await getDocs(fuelRecordsQuery);
-     fuelRecordsSnapshot.forEach(async (recordDoc) => {
-       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/fuelRecords`, recordDoc.id));
-     });
+//      // Delete associated fuel records (Firestore queries return docs, not just IDs)
+//      const fuelRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`), where("carId", "==", parseInt(carId)));
+//      const fuelRecordsSnapshot = await getDocs(fuelRecordsQuery);
+//      fuelRecordsSnapshot.forEach(async (recordDoc) => {
+//        await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/fuelRecords`, recordDoc.id));
+//      });
 
 
-     // Delete associated maintenance records
-     const maintenanceRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`), where("carId", "==", parseInt(carId)));
-     const maintenanceRecordsSnapshot = await getDocs(maintenanceRecordsQuery);
-     maintenanceRecordsSnapshot.forEach(async (recordDoc) => {
-       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, recordDoc.id));
-     });
+//      // Delete associated maintenance records
+//      const maintenanceRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`), where("carId", "==", parseInt(carId)));
+//      const maintenanceRecordsSnapshot = await getDocs(maintenanceRecordsQuery);
+//      maintenanceRecordsSnapshot.forEach(async (recordDoc) => {
+//        await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, recordDoc.id));
+//      });
 
 
-     setShowConfirmDelete(false);
-     setCarToDelete(null);
-   } catch (e) {
-     console.error("Error deleting car and associated records: ", e);
-     // Using a custom modal/message box instead of alert()
-     console.log("Failed to delete car and its records. Please try again.");
-   }
- };
+//      setShowConfirmDelete(false);
+//      setCarToDelete(null);
+//    } catch (e) {
+//      console.error("Error deleting car and associated records: ", e);
+//      // Using a custom modal/message box instead of alert()
+//      console.log("Failed to delete car and its records. Please try again.");
+//    }
+//  };
+const deleteCar = async (carId) => { // carId is the STRING ID of the car document
+  if (!db || !userId) return;
+  try {
+    // Delete car document
+    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/cars`, carId));
+
+    // Delete associated fuel records
+    // IMPORTANT: Ensure 'carId' field in fuelRecords matches the car document ID (string)
+    // Remove parseInt - the 'carId' field in fuel records should be a string matching the car's document ID
+    const fuelRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/fuelRecords`), where("carId", "==", carId)); // <--- CHANGED
+    const fuelRecordsSnapshot = await getDocs(fuelRecordsQuery);
+    fuelRecordsSnapshot.forEach(async (recordDoc) => {
+      await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/fuelRecords`, recordDoc.id));
+    });
+
+    // Delete associated maintenance records
+    // Remove parseInt - the 'carId' field in maintenance records should be a string matching the car's document ID
+    const maintenanceRecordsQuery = query(collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`), where("carId", "==", carId)); // <--- CHANGED
+    const maintenanceRecordsSnapshot = await getDocs(maintenanceRecordsQuery);
+    maintenanceRecordsSnapshot.forEach(async (recordDoc) => {
+      await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`, recordDoc.id));
+    });
+
+    setShowConfirmDelete(false);
+    setCarToDelete(null);
+  } catch (e) {
+    console.error("Error deleting car and associated records: ", e);
+    // Using a custom modal/message box instead of alert()
+    console.log("Failed to delete car and its records. Please try again.");
+  }
+};
+
 
 
  const addFuelRecord = async (recordData, carId) => {
@@ -416,6 +449,18 @@ const CarManagerApp = () => {
      console.log("Failed to add maintenance record. Please try again.");
    }
  };
+// const addMaintenanceRecord = async (recordData, carId) => { // carId is now expected to be a string
+//   if (!db || !userId) return;
+//   try {
+//     const maintenanceRecordsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/maintenanceRecords`);
+//     await addDoc(maintenanceRecordsCollectionRef, { ...recordData, carId: carId, isPlanned: new Date(recordData.date).getTime() > new Date().getTime() }); // Store carId as string
+//     setShowAddRecord(false);
+//   } catch (e) {
+//     console.error("Error adding maintenance record: ", e);
+//     console.log("Failed to add maintenance record. Please try again.");
+//   }
+// };
+
 
 
  const editMaintenanceRecord = async (recordData, carId) => {
@@ -525,7 +570,7 @@ const CarManagerApp = () => {
      if (file) {
        try {
          // Process image: max width 800px, max height 600px, quality 0.7 (70%)
-         const processedPhoto = await processImage(file, 800, 600, 0.7);
+         const processedPhoto = await processImage(file, 1200, 900, 0.85);
          setFormData({...formData, photo: processedPhoto});
        } catch (error) {
          console.error("Error processing image:", error);
@@ -583,7 +628,7 @@ const CarManagerApp = () => {
              type="number"
              placeholder="Current Mileage"
              value={formData.mileage}
-             onChange={(e) => setFormData({...formData, mileage: e.target.value === '' ? '' : parseInt(e.target.value)})}
+             onChange={(e) => setFormData({...formData, mileage: e.target.value === '' ? '' : e.target.value})}
              className="w-full p-2 border rounded"
              required
            />
@@ -663,9 +708,9 @@ const CarManagerApp = () => {
      }
    }, [initialData, initialCarId]);
 
-
+//|| isNaN(localCarId)
    const handleSubmit = () => {
-     if (localCarId === '' || isNaN(parseInt(localCarId)) || !formData.date || formData.mileage === '') {
+     if (localCarId === '' || !formData.date || formData.mileage === '') {
        // Using a custom modal/message box instead of alert()
        console.log("Please select a car and fill in all required fields.");
        return;
@@ -680,7 +725,7 @@ const CarManagerApp = () => {
        console.log("Please enter a valid cost.");
        return;
      }
-     onSubmit(formData, parseInt(localCarId));
+     onSubmit(formData, localCarId);
    };
 
 
@@ -752,7 +797,7 @@ const CarManagerApp = () => {
              type="number"
              placeholder="Current Mileage"
              value={formData.mileage}
-             onChange={(e) => setFormData({...formData, mileage: e.target.value === '' ? '' : parseInt(e.target.value)})}
+             onChange={(e) => setFormData({...formData, mileage: e.target.value === '' ? '' : e.target.value})}
              className="w-full p-2 border rounded"
              required
            />
@@ -1016,7 +1061,7 @@ const CarManagerApp = () => {
             
              <div className="space-y-3">
                {fuelRecords
-                 .filter(record => filterCarId === '' || record.carId === parseInt(filterCarId))
+                 .filter(record => filterCarId === '' || record.carId === filterCarId)
                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                  .map(record => {
                  const car = cars.find(c => c.id === record.carId);
@@ -1045,10 +1090,10 @@ const CarManagerApp = () => {
                    </div>
                  );
                })}
-               {fuelRecords.filter(record => filterCarId === '' || record.carId === parseInt(filterCarId)).length === 0 && (
+               {fuelRecords.filter(record => filterCarId === '' || record.carId === filterCarId).length === 0 && (
                  <div className="text-center py-8 text-gray-500">
                    <Fuel size={48} className="mx-auto mb-4 text-gray-300" />
-                   <p>No fuel records {filterCarId && `for ${cars.find(c => c.id === parseInt(filterCarId))?.name}`}</p>
+                   <p>No fuel records {filterCarId && `for ${cars.find(c => c.id === filterCarId)?.name}`}</p>
                  </div>
                )}
              </div>
@@ -1118,7 +1163,7 @@ const CarManagerApp = () => {
             
              <div className="space-y-3">
                {maintenanceRecords
-                 .filter(record => filterCarId === '' || record.carId === parseInt(filterCarId))
+                 .filter(record => filterCarId === '' || record.carId === filterCarId)
                  .filter(record => {
                    if (maintenanceView === 'past') return !record.isPlanned;
                    if (maintenanceView === 'planned') return record.isPlanned;
@@ -1167,14 +1212,14 @@ const CarManagerApp = () => {
                    );
                  })}
               
-               {maintenanceRecords.filter(record => filterCarId === '' || record.carId === parseInt(filterCarId)).filter(record => {
+               {maintenanceRecords.filter(record => filterCarId === '' || record.carId === filterCarId).filter(record => {
                  if (maintenanceView === 'past') return !record.isPlanned;
                  if (maintenanceView === 'planned') return record.isPlanned;
                  return true;
                }).length === 0 && (
                  <div className="text-center py-8 text-gray-500">
                    <Wrench size={48} className="mx-auto mb-4 text-gray-300" />
-                   <p>No {maintenanceView === 'past' ? 'past' : maintenanceView === 'planned' ? 'planned' : ''} maintenance records {filterCarId && `for ${cars.find(c => c.id === parseInt(filterCarId))?.name}`}</p>
+                   <p>No {maintenanceView === 'past' ? 'past' : maintenanceView === 'planned' ? 'planned' : ''} maintenance records {filterCarId && `for ${cars.find(c => c.id === filterCarId)?.name}`}</p>
                  </div>
                )}
              </div>
@@ -1199,15 +1244,15 @@ const CarManagerApp = () => {
                </select>
              </div>
             
-             {notifications.filter(notification => filterCarId === '' || cars.find(c => c.name === notification.car)?.id === parseInt(filterCarId)).length === 0 ? (
+             {notifications.filter(notification => filterCarId === '' || cars.find(c => c.name === notification.car)?.id === filterCarId).length === 0 ? (
                <div className="text-center py-8 text-gray-500">
                  <Bell size={48} className="mx-auto mb-4 text-gray-300" />
-                 <p>No upcoming renewals in the next 30 days {filterCarId && `for ${cars.find(c => c.id === parseInt(filterCarId))?.name}`}</p>
+                 <p>No upcoming renewals in the next 30 days {filterCarId && `for ${cars.find(c => c.id === filterCarId)?.name}`}</p>
                </div>
              ) : (
                <div className="space-y-3">
                  {notifications
-                   .filter(notification => filterCarId === '' || cars.find(c => c.name === notification.car)?.id === parseInt(filterCarId))
+                   .filter(notification => filterCarId === '' || cars.find(c => c.name === notification.car)?.id === filterCarId)
                    .map((notification, index) => (
                    <div key={index} className={`border-l-4 p-4 rounded-r-lg ${
                      notification.status === 'expired' ? 'border-red-500 bg-red-50' :

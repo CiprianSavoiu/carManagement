@@ -2,7 +2,7 @@
   "name": "car-manager-CipSa",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://github.com/CiprianSavoiu/carManagement",
+  "homepage": "https://cipriansavoiu.github.io/carManagement/",
   "scripts": {
     "start": "react-scripts starts",
     "build": "react-scripts build",
