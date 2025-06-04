@@ -9,7 +9,9 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 
-
+const RonSymbol = ({ size = 16 }) => (
+  <span style={{ fontSize: size, fontWeight: 'bold', lineHeight: 1 }}>RON</span>
+);
 
 
 // --- New AuthScreen Component ---
@@ -896,7 +898,7 @@ const CarManagerApp = () => {
              <input
                type="number"
                step="0.01"
-               placeholder="Amount ($)"
+               placeholder="Amount (RON)"
                value={formData.amount}
                onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
                className="w-full p-2 border rounded"
@@ -915,7 +917,7 @@ const CarManagerApp = () => {
                <input
                  type="number"
                  step="0.01"
-                 placeholder="Cost ($)"
+                 placeholder="Cost (RON)"
                  value={formData.cost}
                  onChange={(e) => setFormData({...formData, cost: parseFloat(e.target.value)})}
                  className="w-full p-2 border rounded"
@@ -1151,7 +1153,7 @@ const CarManagerApp = () => {
                            <div>
                              <h3 className="font-semibold text-lg">{car.name}</h3>
                              <p className="text-gray-600">{car.year} • {car.color}</p>
-                             <p className="text-sm text-gray-500">Current mileage: {car.mileage?.toLocaleString()} miles</p>
+                             <p className="text-sm text-gray-500">Current mileage: {car.mileage?.toLocaleString()} km</p>
                            </div>
                            <div className="flex gap-2">
                              <button
@@ -1239,7 +1241,8 @@ const CarManagerApp = () => {
                    }}
                    className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600"
                  >
-                   <DollarSign size={16} />
+                   {/* <DollarSign size={16} /> */}
+                   {/* <RonSymbol size={16} />  */}
                    Add Expense
                  </button>
                </div>
@@ -1277,8 +1280,8 @@ const CarManagerApp = () => {
                          </div>
                          <div className="text-right ml-4 flex items-center gap-2">
                            <div>
-                             <p className="font-semibold">${record.amount?.toFixed(2)}</p>
-                             <p className="text-sm text-gray-600">{record.mileage?.toLocaleString()} miles</p>
+                             <p className="font-semibold">RON {record.amount?.toFixed(2)}</p>
+                             <p className="text-sm text-gray-600">{record.mileage?.toLocaleString()} km</p>
                            </div>
                            <button
                              onClick={() => {
@@ -1309,7 +1312,10 @@ const CarManagerApp = () => {
                    return record.category?.toLowerCase() === expenseView;
                  }).length === 0 && (
                  <div className="text-center py-8 text-gray-500">
-                   <DollarSign size={48} className="mx-auto mb-4 text-gray-300" />
+                   {/* <DollarSign size={48} className="mx-auto mb-4 text-gray-300" /> */}
+                   <span className="mx-auto mb-4 text-gray-300 block text-[48px] font-semibold leading-none">
+                  RON
+                  </span>
                    <p>No {expenseView !== 'all' ? expenseView : ''} expense records {filterCarId && `for ${cars.find(c => c.id === filterCarId)?.name}`}</p>
                  </div>
                )}
@@ -1415,7 +1421,7 @@ const CarManagerApp = () => {
                          <div className="text-right ml-4 flex items-center gap-2">
                            <div>
                              <p className="font-semibold">${record.cost?.toFixed(2)}</p>
-                             <p className="text-sm text-gray-600">{record.mileage?.toLocaleString()} miles</p>
+                             <p className="text-sm text-gray-600">{record.mileage?.toLocaleString()} km</p>
                            </div>
                            <button
                              onClick={() => {
